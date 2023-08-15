@@ -1,3 +1,4 @@
+// use std::fmt::format;
 // use std::fs::File;
 use std::io::Read;
 
@@ -23,13 +24,15 @@ use std::io::Read;
 // }
 
 
-
+use std::env;
 use reqwest::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let url = "https://transfer.sh/okok.txt";
-    let file_path = "./plik.txt";
+    let args: Vec<String> = env::args().collect();
+    let var = &args[1];
+    let url = &format!("https://transfer.sh/{var}");
+    let file_path = var;
 
     let client = Client::new();
     let mut file = std::fs::File::open(file_path)?;
