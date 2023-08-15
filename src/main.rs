@@ -8,14 +8,14 @@ fn main() {
   if args.len() > 1 {
       let var = &args[1];
 
-      if var == "-h" {
+      if var == "-h" || var == "--help" {
           help();
       }
 
-      else if var == "-del" {
+      else if var == "-del" || var == "--delete" {
           delete(&args[2]);
       }
-      else if var == "-dow" {
+      else if var == "-dow" || var == "--download" {
           download(&args[2], &args[3]);
       }
 
@@ -40,9 +40,9 @@ fn help(){
   println!("Unofficial Transfer.sh CLI\n");
   println!("Usage: transfer.exe [OPTIONS]\n");
   print!("Options: 
-  -h                         Print help
-  -dow <link> <file name>    Dowload file
-  -del <delete-link>         Delete file");
+  -h, --help                             Print help
+  -dow, --download <link> <file name>    Dowload file
+  -del, --delete <delete-link>           Delete file");
 }
 
 #[cfg(target_os = "windows")]
