@@ -1,62 +1,56 @@
-use std::env;
-use std::process::Command;
+// use std::fs::File;
+use std::io::Read;
 
-#[cfg(target_os = "windows")]
-fn main() {
-  let args: Vec<String> = env::args().collect();
+// use reqwest::Client;
 
-  if args.len() > 1 {
-      let var = &args[1];
+// async fn upload_file() -> Result<(), Box<dyn std::error::Error>> {
+//   let url = "https://transfer.sh/okok.txt";
+//   let mut file = File::open("./plik.txt")?;
+//   let mut contents = Vec::new();
+//   file.read_to_end(&mut contents)?;
 
-      if var == "-h" || var == "--help" {
-          help();
-      }
+//   let client = Client::new();
+//   let response = client.put(url).body(contents).send().await?;
+//   println!("{}", response.text().await?);
 
-      else if var == "-del" || var == "--delete" {
-          delete(&args[2]);
-      }
-      else if var == "-dow" || var == "--download" {
-          download(&args[2], &args[3]);
-      }
+//   Ok(())
+// }
 
-      else {
-        Command::new("powershell")
-          // ! Działająca wersja
-          .args(&["/c","Invoke-WebRequest","-Uri",&format!("https://transfer.sh/{var}"),"-Method Put", "-InFile",var]) 
-          // ! TESTOWA wersja
-          // .args(&["/c","Invoke-WebRequest","-Uri","https://transfer.sh/tak.txt","-Method Put", "-InFile",".\\plik.txt"])
-          .spawn()
-          .expect("Failed to upload file");
-      }
+// fn main() -> Result<(), Box<dyn std::error::Error>> {
+//   tokio::runtime::Runtime::new()?.block_on(upload_file())?;
 
-  } else {
-      println!("Missing argument.");
-      println!("Use -h for help.");
-  }
-}
+//   Ok(())
+// }
 
-#[cfg(target_os = "windows")]
-fn help(){
-  println!("Unofficial Transfer.sh CLI\n");
-  println!("Usage: transfer.exe [OPTIONS]\n");
-  print!("Options: 
-  -h, --help                             Print help
-  -dow, --download <link> <file name>    Dowload file
-  -del, --delete <delete-link>           Delete file");
-}
 
-#[cfg(target_os = "windows")]
-fn delete(link: &str){
-  Command::new("powershell")
-    .args(&["/c","Invoke-WebRequest","-Uri",link,"-Method Delete"])
-    .spawn()
-    .expect("Failed to delete file");
-}
 
-#[cfg(target_os = "windows")]
-fn download(link: &str, file_name: &str){
-  Command::new("powershell")
-    .args(&["/c","Invoke-WebRequest","-Uri",link,"-OutFile",file_name])
-    .spawn()
-    .expect("Failed to download file");
+use reqwest::Client;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let url = "https://transfer.sh/okok.txt";
+    let file_path = "./plik.txt";
+
+    let client = Client::new();
+    let mut file = std::fs::File::open(file_path)?;
+    let mut contents = Vec::new();
+    file.read_to_end(&mut contents)?;
+
+    let response = client.put(url)
+        .body(contents)
+        .send()
+        .await?;
+
+        
+    let content_type = response.headers()
+        .get("x-url-delete")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("Unknown");
+    println!("Delete-link: {}", content_type);
+
+    // Access other headers as needed
+
+    println!("{}", response.text().await?);
+
+    Ok(())
 }
