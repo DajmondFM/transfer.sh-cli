@@ -16,9 +16,12 @@ async fn main() {
               if let Err(err) = delete(&args[2]).await {
                   eprintln!("Error: {}", err);
               }
-          } else {
-              println!("Missing delete link argument.");
           }
+      } else if var == "-dow" || var == "--download" {
+          if let Err(err) = download(&args[2], &args[3]).await {
+          eprintln!("Error: {}", err);
+      }
+      
       } else {
           if let Err(err) = upload(&var).await {
               eprintln!("Error: {}", err);
@@ -34,7 +37,8 @@ fn help() {
     println!("Unofficial Transfer.sh CLI\n");
     println!("Usage: transfer.exe [OPTIONS]\n");
     print!("Options:
-  -h, --help                             Print help
+  -h,   --help                           Print help
+  -dow, --download <link> <file name>    Dowload file
   -del, --delete <delete-link>           Delete file");
 }
 
@@ -67,6 +71,24 @@ async fn delete(link: &str) -> Result<(), Box<dyn std::error::Error>> {
   let response = client.delete(link).send().await?;
 
   println!("Status: {}", response.status());
+
+  Ok(())
+}
+
+
+use std::fs::File;
+use std::io::Write;
+
+async fn download(url: &str, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+  let client = Client::new();
+  let response = client.get(url).send().await?;
+
+  let mut file = File::create(file_path)?;
+  let  buffer = response.bytes().await?;
+
+  file.write_all(&buffer)?;
+
+  println!("Download completed!");
 
   Ok(())
 }
