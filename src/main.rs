@@ -70,7 +70,12 @@ async fn delete(link: &str) -> Result<(), Box<dyn std::error::Error>> {
   let client = Client::new();
   let response = client.delete(link).send().await?;
 
-  println!("Status: {}", response.status());
+  // Check if the delete operation was successful
+  if response.status().is_success() {
+      println!("Delete complete!");
+  } else {
+      println!("Delete failed with status: {}", response.status());
+  }
 
   Ok(())
 }
