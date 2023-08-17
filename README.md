@@ -9,7 +9,7 @@ Unofficial Transfer.sh CLI
 Usage: transfer.exe [OPTIONS]
 
 Options:
-  -h, --help                             Print help
+  -h,   --help                           Print help
   -dow, --download <link> <file name>    Dowload file
   -del, --delete <delete-link>           Delete file
 ```
