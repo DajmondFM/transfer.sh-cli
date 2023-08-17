@@ -1,62 +1,94 @@
 use std::env;
-use std::process::Command;
+use reqwest::Client;
+use std::io::Read;
 
-#[cfg(target_os = "windows")]
-fn main() {
+#[tokio::main]
+async fn main() {
   let args: Vec<String> = env::args().collect();
 
   if args.len() > 1 {
-      let var = &args[1];
+    let var = &args[1];
 
       if var == "-h" || var == "--help" {
           help();
+      } else if var == "-del" || var == "--delete" {
+          if args.len() > 2 {
+              if let Err(err) = delete(&args[2]).await {
+                  eprintln!("Error: {}", err);
+              }
+          }
+      } else if var == "-dow" || var == "--download" {
+          if let Err(err) = download(&args[2], &args[3]).await {
+          eprintln!("Error: {}", err);
       }
-
-      else if var == "-del" || var == "--delete" {
-          delete(&args[2]);
+      
+      } else {
+          if let Err(err) = upload(&var).await {
+              eprintln!("Error: {}", err);
+          }
       }
-      else if var == "-dow" || var == "--download" {
-          download(&args[2], &args[3]);
-      }
-
-      else {
-        Command::new("powershell")
-          // ! Działająca wersja
-          .args(&["/c","Invoke-WebRequest","-Uri",&format!("https://transfer.sh/{var}"),"-Method Put", "-InFile",var]) 
-          // ! TESTOWA wersja
-          // .args(&["/c","Invoke-WebRequest","-Uri","https://transfer.sh/tak.txt","-Method Put", "-InFile",".\\plik.txt"])
-          .spawn()
-          .expect("Failed to upload file");
-      }
-
   } else {
       println!("Missing argument.");
       println!("Use -h for help.");
   }
 }
 
-#[cfg(target_os = "windows")]
-fn help(){
-  println!("Unofficial Transfer.sh CLI\n");
-  println!("Usage: transfer.exe [OPTIONS]\n");
-  print!("Options: 
-  -h, --help                             Print help
+fn help() {
+    println!("Unofficial Transfer.sh CLI\n");
+    println!("Usage: transfer.exe [OPTIONS]\n");
+    print!("Options:
+  -h,   --help                           Print help
   -dow, --download <link> <file name>    Dowload file
   -del, --delete <delete-link>           Delete file");
 }
 
-#[cfg(target_os = "windows")]
-fn delete(link: &str){
-  Command::new("powershell")
-    .args(&["/c","Invoke-WebRequest","-Uri",link,"-Method Delete"])
-    .spawn()
-    .expect("Failed to delete file");
+async fn upload(file: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let url = format!("https://transfer.sh/{file}");
+    let file_path = file;
+    let client = Client::new();
+    let mut file = std::fs::File::open(file_path)?;
+    let mut contents = Vec::new();
+    file.read_to_end(&mut contents)?;
+
+    let response = client.put(&url)
+        .body(contents)
+        .send()
+        .await?;
+
+    let delete_link = response.headers()
+        .get("x-url-delete")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("Unknown");
+    println!("Delete-link: {}", delete_link);
+
+    println!("{}", response.text().await?);
+
+    Ok(())
 }
 
-#[cfg(target_os = "windows")]
-fn download(link: &str, file_name: &str){
-  Command::new("powershell")
-    .args(&["/c","Invoke-WebRequest","-Uri",link,"-OutFile",file_name])
-    .spawn()
-    .expect("Failed to download file");
+async fn delete(link: &str) -> Result<(), Box<dyn std::error::Error>> {
+  let client = Client::new();
+  let response = client.delete(link).send().await?;
+
+  println!("Status: {}", response.status());
+
+  Ok(())
+}
+
+
+use std::fs::File;
+use std::io::Write;
+
+async fn download(url: &str, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+  let client = Client::new();
+  let response = client.get(url).send().await?;
+
+  let mut file = File::create(file_path)?;
+  let  buffer = response.bytes().await?;
+
+  file.write_all(&buffer)?;
+
+  println!("Download completed!");
+
+  Ok(())
 }
