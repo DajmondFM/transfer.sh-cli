@@ -12,6 +12,8 @@ edition = "2021"
 reqwest = "0.11"
 tokio = { version = "1", features = ["full"] }
 
+[target.x86_64-unknown-linux-gnu.dependencies]
+openssl = {version = "0.10", features = ["vendored"]}
 
 [profile.release]
 strip = true
